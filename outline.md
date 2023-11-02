@@ -4,7 +4,7 @@
 
 ## Setting up account for use
 
-## Working with the web interfact
+## Working with the web interface
 
 ## Leading practices and strategies 
 
