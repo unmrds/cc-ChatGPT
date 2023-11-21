@@ -59,7 +59,7 @@ it as '2010.csv' in the current working directory
 library
 ~~~
 
-Copy and paste the response into your Python environment. Try to run it - does it work?
+Copy and paste the response into your environment. Try to run it - does it work?
 
 Note that this notebook includes the verbatim responses from ChatGPT used to develop
 this tutorial. These responses have been tested andexecuted beforehand. Your own 
