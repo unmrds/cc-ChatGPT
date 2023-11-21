@@ -1,5 +1,5 @@
 ---
-title: "ChatGPT demo"
+title: "ChatGPT demo (R)"
 author: "Jon Wheeler"
 date: "2023-11-21"
 output: html_document
@@ -130,6 +130,9 @@ the readr function, ```read_csv()```, but the result
 is the same for our purposes. We will leave it as-is, but note that we may
 need to specify packages or include a reference to the tidyverse in our prompts.
 
+As above, copy and paste the response into your R environment. 
+Try to run it - does it work?
+
 ```{r read file}
 # Read the CSV file into a data frame
 data <- read.csv("2010.csv")
@@ -139,14 +142,411 @@ print(head(data, 5))
 
 ```
 
+### Group data
+
+Here we may run into our first hiccup, since the next step of our process requires us to group the data in the dataframe we just created. The current state of our local environment is maintained in the sense that we can refer to a data structure and the reference is understood. But since ChatGPT isn't executing code, there is no state to be maintained. What happens if we try the following prompt?
+
+~~~
+"""
+Group the data by sex.
+"""
+~~~
+
+Note that although we did not specify the tidyverse in the above prompt, the
+response uses dplyr. Also, the response does include the name of the dataframe,
+*data*, though the first comment impies that ChatGPT is simply using the 
+name *data* by convention
+
+```{r group by sex}
+# Assuming 'data' is your data frame
+
+# Install and load the 'dplyr' package
+if (!require(dplyr)) {
+  install.packages("dplyr")
+}
+library(dplyr)
+
+# Group the data by sex
+grouped_data <- data %>% 
+  group_by(sex)
+
+# Print the first few rows of the grouped data
+print(head(grouped_data, 5))
+```
+
+### Sort data
+
+The first five rows of grouped data above don't look different from the previous
+output, because the aggregated data we downloaded from the Social Security 
+Administration is already grouped by sex. 
+
+Let's use ChatGPT to sort the data by count.
+
+~~~
+"""
+Given a dataframe named 'data,' with variables 'name', 'sex', and 'count,'
+sort the names by 'count.'
+"""
+~~~
+
+
+```{r sort by count}
+# Assuming 'data' is your dataframe with variables 'name', 'sex', and 'count'
+# Sort the dataframe by 'count'
+sorted_data <- data[order(data$count), ]
+
+# Display the sorted dataframe
+head(sorted_data)
+```
+
+
+This looks okay, but we wanted to sort the data from highest to lowest count values. We can guess what we did wrong, but how do we fix it in our code?
+
+#### Debug
+
+Before we start debugging our code, it is useful to think about the different kinds of errors we can encounter when programming. Broadly, errors fall into two different types. Most common are syntax errors, which can be thought of as cases when some code doesn't follow the rules of the language. Try this example:
+
+~~~
+"""
+sorted_data <- data[order(data$count]
+head(sorted_data)
+"""
+~~~
+
+If we plug this prompt into ChatGPT, it very handily described the syntax error
+and provides corrected code. In this example, this is the same code we used above
+to sort the data.
+
+```{r debug syntax}
+sorted_data <- data[order(data$count), ]
+head(sorted_data)
+```
+
+This code works, but the problem we ran into above was not a syntax error - the 
+code ran just fine. Instead, we have an example of the other types of errors
+that occur when the syntax is correct but the result is not what we expect.
+
+As we have been doing, rather than manually troubleshoot let's ask ChatGPT to
+fix the problem. 
+
+~~~
+"""
+# Why does the following code not sort from highest to lowest by count?
+
+sorted_data <- data[order(data$count), ]
+head(sorted_data)
+"""
+~~~
+
+As with the syntax error, ChatGPT provides a brief explanation of the error
+along with corrected code.
+
+```{r debug semantics}
+sorted_data <- data[order(data$count, decreasing = TRUE), ]
+head(sorted_data)
+```
+
+Copy the response into your environment. Does it work as expected? Is the explanation provided by ChatGPT clear? 
+
+This is fine, but if AI is really acting as a translation layer between natural 
+language and programming languages, maybe we should have tried using a natural
+language prompt? We almost never say things like *Give me a list of baby names
+reverse sorted by count.* Instead, we are more likely to ask for the most 
+popular baby names. Let's try this.
+
+~~~
+"""
+Given a dataframe data, with columns 'name,' 'sex,' and 'count,' get the
+most popular names by sex.
+"""
+~~~
+
+And the response:
+
+```{r group and sort}
+# Assuming 'data' is your dataframe with columns 'name,' 'sex,' and 'count'
+# Load the dplyr package
+if (!require(dplyr)) {
+  install.packages("dplyr")
+}
+library(dplyr)
+
+# Group data by sex and find the most popular name for each sex
+most_popular_names <- data %>%
+  group_by(sex) %>%
+  slice(which.max(count))
+
+# Print the most popular names
+print(most_popular_names)
+```
+
+The response received this time worked!
+
+### Plot popular names
+
+We have so far reproduced the entire workflow from our previous RStudio 
+workshops. As an added bonus, let's see what it takes to plot the top three 
+names for both sexes.
+
+Let's start with what may be the most natural of natural language prompts. We
+might consider the column names in our dataframe to be intuitive enough that
+ChatGPT will use them in the response by default, so will leave them out of the
+next prompt.
+
+~~~
+"""
+Given a dataframe called 'data,' plot the three most popular names by sex.
+"""
+~~~
+
+Run the response.
+
+```{r plot popular names by sex}
+# Assuming 'data' is your dataframe with columns 'name,' 'sex,' and 'count'
+# Load the ggplot2 package
+if (!require(ggplot2)) {
+  install.packages("ggplot2")
+}
+library(ggplot2)
+
+# Find the three most popular names for each sex
+most_popular_names <- data %>%
+  group_by(sex) %>%
+  arrange(desc(count)) %>%
+  slice_head(n = 3)
+
+# Plot the most popular names
+ggplot(most_popular_names, aes(x = reorder(name, -count), y = count, fill = sex)) +
+  geom_col(position = "dodge") +
+  labs(title = "Three Most Popular Names by Sex",
+       x = "Name",
+       y = "Count",
+       fill = "Sex") +
+  theme_minimal()
+```
+
+This is good, but we might want to see all the names grouped by sex. 
+
+~~~
+"""
+Given a dataframe called 'data,' plot the three most popular names by sex. The
+plot should be grouped by sex, too, with female names first.
+"""
+~~~
+
+
+The response:
+
+```{r plot popular names by sex and group female first}
+# Assuming 'data' is your dataframe with columns 'name,' 'sex,' and 'count'
+# Load the ggplot2 package
+if (!require(ggplot2)) {
+  install.packages("ggplot2")
+}
+library(ggplot2)
+
+# Find the three most popular names for each sex
+most_popular_names <- data %>%
+  group_by(sex) %>%
+  arrange(sex, desc(count)) %>%
+  slice_head(n = 3)
+
+# Order the factor levels of 'name' to have female names first
+most_popular_names$name <- factor(most_popular_names$name, levels = unique(most_popular_names$name))
+
+# Plot the most popular names
+ggplot(most_popular_names, aes(x = name, y = count, fill = sex)) +
+  geom_col(position = "dodge") +
+  labs(title = "Three Most Popular Names by Sex",
+       x = "Name",
+       y = "Count",
+       fill = "Sex") +
+  theme_minimal()
+```
+
+That works, and we note as well that although we asked for female names to be
+provided first, the actual values in the 'sex' column are 'F' and 'M,' not 
+'female' and 'male.' However, the code correctly uses that column for 
+the *fill* argument in the aesthetic mapping of the plot.
+
+Strangely, ChatGPT also happened to pick my favorite theme.
+
+It's beginning to feel like we might be out of jobs! Let's try this - we will
+explain what is happening in the above code. Then we will ask ChatGPT to explain
+it and compare.
+
+~~~
+# Explain the previous code.
+~~~
+
+What about documenting the code?
+
+~~~
+# Document the previous code.
+~~~
+
+
+We get:
+
+
+```{r documented plotting code}
+# Check if the ggplot2 package is installed; if not, install it and load the library
+if (!require(ggplot2)) {
+  install.packages("ggplot2")
+}
+library(ggplot2)
+
+# Find the three most popular names for each sex
+most_popular_names <- data %>%
+  group_by(sex) %>%                             # Group the data by the 'sex' column
+  arrange(sex, desc(count)) %>%                 # Sort the data by 'sex' and then by 'count' in descending order
+  slice_head(n = 3)                             # Select the top three rows for each group (most popular names)
+
+# Order the factor levels of 'name' to have female names first
+most_popular_names$name <- factor(most_popular_names$name, levels = unique(most_popular_names$name))
+
+# Plot the most popular names
+ggplot(most_popular_names, aes(x = name, y = count, fill = sex)) +  # Set up the basic ggplot
+  geom_col(position = "dodge") +               # Create a grouped bar plot
+  labs(title = "Three Most Popular Names by Sex",  # Add title and axis labels
+       x = "Name",
+       y = "Count",
+       fill = "Sex") +
+  theme_minimal()                               # Apply a minimal theme to the plot
+```
+
+
+#### Improve performance
+
+We have a workflow! We would download a new dataset and get the top names by sex 
+and ploted the top three names by sex, so long as additional datasets have the 
+same structure as our 2010 data. 
+
+But we note some redundancy in our process - repeated imports of packages, 
+referencing existing objects and data structures by name, etc. Let's now see 
+if we can use ChatGPT to improve on our workflow.
+
+The next prompt is a copy-paste of most of the code received so far. Note that we
+are not including example code that doesn't relate to the prompt.
+
+~~~
+"""
+Improve the performance of the following code. The code should download a data file, save it to the local computer, open it as a dataframe, print the most popular name by sex, and plot the most popular three names by sex. In the plot, female names should come first.
+"""
+
+# Load necessary library
+library(utils)
+
+# URL of the file
+url <- "https://raw.githubusercontent.com/unmrds/cc-R-RStudio/master/cc-R-Names/data/2010"
+
+# File name to save
+file_name <- "2010.csv"
+
+# Download the file
+download.file(url, destfile = file_name, mode = "wb")
+
+# Read the CSV file into a data frame
+data <- read.csv("2010.csv")
+
+# Assuming 'data' is your dataframe with columns 'name,' 'sex,' and 'count'
+# Load the dplyr package
+if (!require(dplyr)) {
+  install.packages("dplyr")
+}
+library(dplyr)
+
+# Group data by sex and find the most popular name for each sex
+most_popular_names <- data %>%
+  group_by(sex) %>%
+  slice(which.max(count))
+
+# Print the most popular names
+print(most_popular_names)
+
+# Assuming 'data' is your dataframe with columns 'name,' 'sex,' and 'count'
+# Load the ggplot2 package
+if (!require(ggplot2)) {
+  install.packages("ggplot2")
+}
+library(ggplot2)
+
+# Find the three most popular names for each sex
+most_popular_names <- data %>%
+  group_by(sex) %>%
+  arrange(sex, desc(count)) %>%
+  slice_head(n = 3)
+
+# Order the factor levels of 'name' to have female names first
+most_popular_names$name <- factor(most_popular_names$name, levels = unique(most_popular_names$name))
+
+# Plot the most popular names
+ggplot(most_popular_names, aes(x = name, y = count, fill = sex)) +
+  geom_col(position = "dodge") +
+  labs(title = "Three Most Popular Names by Sex",
+       x = "Name",
+       y = "Count",
+       fill = "Sex") +
+  theme_minimal()
+~~~
+
+
+As of November 21, 2023, the above prompt is generating an error in ChatGPT. If
+we don't resolve that by the date of the workshop, we would ask you to come up
+with a single prompt that asks ChatGPT to code out the entire workflow. We 
+mentioned earlier that this is not always possible, and may not be the best
+approach even when it is possible.
+
+Is it possible in this case to generate working code for the whole workflow 
+with a single prompt? What are the advantages and disadvantages of this approach?
+
+## Pause and reflect
+
+The following prompt was used to generate the images
+below using the image AI service, Mid Journey (<https://mid-journey.ai/>). In
+each case, an artist's name was used in place of the *[...]*:
+
+> In the style of [...], a data librarian with his mind blown because 
+> ChatGPT just did hours of work for him in a few minutes.
+
+From the list of options below, can you guess which artist's name resulted in
+which image?
+
+- Edward Hopper
+- Georgia O'Keeffe
+- Pablo Picasso
+- Jackson Pollock
+- *a Marvel Comic*
+
+
+![](./images/okeeffe.png)
+
+
+.
+
+
+![](./images/marvel.png)
+
+.
+
+
+![](./images/hopper.png)
+
+.
+
+
+![](./images/pollock.png)
+
+.
+
+
+![](./images/picasso.png)
 
 
 
+Which image best captures your feelings about AI?
 
-
-
-
-
+.
 
 
 

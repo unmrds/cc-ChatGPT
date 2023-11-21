@@ -143,7 +143,6 @@ Inspect the grouped and sorted dataframe 'sorted_grouped_sex.'
 """
 ~~~
 
-This looks okay, but we wanted to sort the data from highest to lowest count values. We can guess what we did wrong, but how do we fix it in our code?
 
 #### Debug
 
