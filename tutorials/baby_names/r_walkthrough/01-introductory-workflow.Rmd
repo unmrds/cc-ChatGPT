@@ -213,7 +213,7 @@ head(sorted_data)
 """
 ~~~
 
-If we plug this prompt into ChatGPT, it very handily described the syntax error
+If we plug this prompt into ChatGPT, it very handily describes the syntax error
 and provides corrected code. In this example, this is the same code we used above
 to sort the data.
 
