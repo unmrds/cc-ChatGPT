@@ -500,54 +500,5 @@ approach even when it is possible.
 Is it possible in this case to generate working code for the whole workflow 
 with a single prompt? What are the advantages and disadvantages of this approach?
 
-## Pause and reflect
-
-The following prompt was used to generate the images
-below using the image AI service, Mid Journey (<https://mid-journey.ai/>). In
-each case, an artist's name was used in place of the *[...]*:
-
-> In the style of [...], a data librarian with his mind blown because 
-> ChatGPT just did hours of work for him in a few minutes.
-
-From the list of options below, can you guess which artist's name resulted in
-which image?
-
-- Edward Hopper
-- Georgia O'Keeffe
-- Pablo Picasso
-- Jackson Pollock
-- *a Marvel Comic*
-
-
-![](./images/okeeffe.png)
-
-
-.
-
-
-![](./images/marvel.png)
-
-.
-
-
-![](./images/hopper.png)
-
-.
-
-
-![](./images/pollock.png)
-
-.
-
-
-![](./images/picasso.png)
-
-
-
-Which image best captures your feelings about AI?
-
-.
-
-
 
 
